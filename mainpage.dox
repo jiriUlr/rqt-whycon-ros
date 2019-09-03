@@ -1,0 +1,6 @@
+/**
+\mainpage
+\htmlinclude manifest.html
+
+\b rqt_whycon_ros provides a GUI plugin for whycon_ros.
+*/
