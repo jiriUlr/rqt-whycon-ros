@@ -47,6 +47,12 @@
 #include <QPainter>
 #include <QStandardPaths>
 
+#include "whycon/SelectMarker.h"
+#include "whycon/SetCalibMethod.h"
+#include "whycon/SetCalibPath.h"
+#include "whycon/SetCoords.h"
+#include "whycon/SetDrawing.h"
+
 namespace rqt_whycon
 {
 
@@ -182,7 +188,7 @@ void RqtWhycon::updateNodeList()
 {
   // msg types to look for
   QSet<QString> message_types;
-  message_types.insert("whycon_ros/MarkerArray");
+  message_types.insert("whycon/MarkerArray");
 
   // previously selected node
   QString selected = ui_.nodes_combo_box->currentText();
@@ -264,11 +270,11 @@ void RqtWhycon::onNodeChanged(int index)
     std::string node_str = node.toStdString();
     image_transport::ImageTransport it(getNodeHandle());
     img_sub_ = it.subscribe(node_str + "/processed_image", 1, &RqtWhycon::imageCallback, this);
-    drawing_client_ = getNodeHandle().serviceClient<whycon_ros::SetDrawing>(node_str + "/set_drawing");
-    coord_system_client_ = getNodeHandle().serviceClient<whycon_ros::SetCoords>(node_str + "/set_coords");
-    calib_method_client_ = getNodeHandle().serviceClient<whycon_ros::SetCalibMethod>(node_str + "/set_calib_method");
-    calib_path_client_ = getNodeHandle().serviceClient<whycon_ros::SetCalibPath>(node_str + "/set_calib_path");
-    select_marker_client_ = getNodeHandle().serviceClient<whycon_ros::SelectMarker>(node_str + "/select_marker");
+    drawing_client_ = getNodeHandle().serviceClient<whycon::SetDrawing>(node_str + "/set_drawing");
+    coord_system_client_ = getNodeHandle().serviceClient<whycon::SetCoords>(node_str + "/set_coords");
+    calib_method_client_ = getNodeHandle().serviceClient<whycon::SetCalibMethod>(node_str + "/set_calib_method");
+    calib_path_client_ = getNodeHandle().serviceClient<whycon::SetCalibPath>(node_str + "/set_calib_path");
+    select_marker_client_ = getNodeHandle().serviceClient<whycon::SelectMarker>(node_str + "/select_marker");
     //qDebug() << "RqtWhycon::onNodeChanged() to node " << node;
   }
 }
@@ -279,7 +285,7 @@ void RqtWhycon::onCoordinateChanged(int index)
   {
     coord_state_ = static_cast<CoordState>(ui_.coordinates_combo_box->itemData(index).toInt());
 
-    whycon_ros::SetCoords set_coords;
+    whycon::SetCoords set_coords;
     set_coords.request.coords = coord_state_;
     coord_system_client_.call(set_coords);
 
@@ -357,7 +363,7 @@ void RqtWhycon::onDrawChanged()
 {
   if(drawing_client_.exists())
   {
-    whycon_ros::SetDrawing set_drawing;
+    whycon::SetDrawing set_drawing;
     set_drawing.request.draw_coords = ui_.draw_coords_push_button->isChecked();
     set_drawing.request.draw_segments = ui_.draw_segments_push_button->isChecked();
     drawing_client_.call(set_drawing);
@@ -372,7 +378,7 @@ void RqtWhycon::onCalibMethod()
 {
   if(calib_method_client_.exists())
   {
-    whycon_ros::SetCalibMethod calib_method;
+    whycon::SetCalibMethod calib_method;
     calib_method.request.method = ui_.calib_button_group->checkedId();
     calib_method_client_.call(calib_method);
 
@@ -414,7 +420,7 @@ void RqtWhycon::loadCalib()
 
   if(calib_path_client_.exists())
   {
-    whycon_ros::SetCalibPath calib_path;
+    whycon::SetCalibPath calib_path;
     calib_path.request.action = "load";
     calib_path.request.path = file_name.toStdString();
     calib_path_client_.call(calib_path);
@@ -440,7 +446,7 @@ void RqtWhycon::saveCalib()
 
   if(calib_path_client_.exists())
   {
-    whycon_ros::SetCalibPath calib_path;
+    whycon::SetCalibPath calib_path;
     calib_path.request.action = "save";
     calib_path.request.path = file_name.toStdString();
     calib_path_client_.call(calib_path);
@@ -504,7 +510,7 @@ void RqtWhycon::onMouseLeft(int x, int y)
           break;
       }
 
-      whycon_ros::SelectMarker marker;
+      whycon::SelectMarker marker;
       marker.request.point = clickLocation;
       select_marker_client_.call(marker);
     }

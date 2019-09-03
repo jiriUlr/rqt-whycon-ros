@@ -52,12 +52,6 @@
 
 #include <vector>
 
-#include "whycon_ros/SelectMarker.h"
-#include "whycon_ros/SetCalibMethod.h"
-#include "whycon_ros/SetCalibPath.h"
-#include "whycon_ros/SetCoords.h"
-#include "whycon_ros/SetDrawing.h"
-
 namespace rqt_whycon
 {
 

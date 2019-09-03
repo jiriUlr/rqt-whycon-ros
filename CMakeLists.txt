@@ -12,7 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   geometry_msgs
   cv_bridge
-  whycon_ros
+  whycon
 )
 
 find_package(Qt5Widgets REQUIRED)
@@ -43,7 +43,7 @@ endif()
 catkin_package(
   INCLUDE_DIRS ${rqt_whycon_INCLUDE_DIRECTORIES}
   LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS rqt_gui rqt_gui_cpp image_transport sensor_msgs geometry_msgs cv_bridge whycon_ros
+  CATKIN_DEPENDS rqt_gui rqt_gui_cpp image_transport sensor_msgs geometry_msgs cv_bridge whycon
 )
 
 catkin_python_setup()

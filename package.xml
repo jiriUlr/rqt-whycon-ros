@@ -22,7 +22,7 @@
   <depend>image_transport</depend>
   <depend>rqt_gui</depend>
   <depend>rqt_gui_cpp</depend>
-  <depend>whycon_ros</depend>
+  <depend>whycon</depend>
 
   <build_depend>qtbase5-dev</build_depend>
 
