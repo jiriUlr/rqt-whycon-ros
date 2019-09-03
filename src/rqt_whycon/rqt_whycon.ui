@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>RqtWhyconRosWidget</class>
- <widget class="QWidget" name="RqtWhyconRosWidget">
+ <class>RqtWhyconWidget</class>
+ <widget class="QWidget" name="RqtWhyconWidget">
   <property name="enabled">
    <bool>true</bool>
   </property>
@@ -40,7 +40,7 @@
            <bool>true</bool>
           </property>
           <property name="toolTip">
-           <string>Select whycon_ros topic namespace</string>
+           <string>Select WhyCon node</string>
           </property>
           <property name="sizeAdjustPolicy">
            <enum>QComboBox::AdjustToContents</enum>
@@ -50,7 +50,7 @@
         <item>
          <widget class="QPushButton" name="refresh_nodes_push_button">
           <property name="toolTip">
-           <string>Refresh topic namespaces</string>
+           <string>Refresh nodes</string>
           </property>
           <property name="icon">
            <iconset theme="view-refresh">
@@ -366,7 +366,7 @@
           <number>1</number>
          </property>
          <item>
-          <widget class="rqt_whycon_ros::RatioLayoutedFrame" name="image_frame">
+          <widget class="rqt_whycon::RatioLayoutedFrame" name="image_frame">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
              <horstretch>0</horstretch>
@@ -400,9 +400,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>rqt_whycon_ros::RatioLayoutedFrame</class>
+   <class>rqt_whycon::RatioLayoutedFrame</class>
    <extends>QFrame</extends>
-   <header>rqt_whycon_ros/ratio_layouted_frame.h</header>
+   <header>rqt_whycon/ratio_layouted_frame.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

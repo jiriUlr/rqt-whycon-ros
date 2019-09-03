@@ -30,12 +30,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <rqt_whycon_ros/ratio_layouted_frame.h>
+#include <rqt_whycon/ratio_layouted_frame.h>
 
 #include <assert.h>
 #include <QMouseEvent>
 
-namespace rqt_whycon_ros
+namespace rqt_whycon
 {
 
 RatioLayoutedFrame::RatioLayoutedFrame(QWidget* parent, Qt::WindowFlags flags)

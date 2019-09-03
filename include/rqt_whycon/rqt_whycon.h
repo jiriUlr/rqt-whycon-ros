@@ -30,26 +30,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef RQT_WHYCON_ROS__RQT_WHYCON_ROS_H
-#define RQT_WHYCON_ROS__RQT_WHYCON_ROS_H
+#ifndef RQT_WHYCON__RQT_WHYCON_H
+#define RQT_WHYCON__RQT_WHYCON_H
 
 #include <rqt_gui_cpp/plugin.h>
 
-#include <ui_rqt_whycon_ros.h>
+#include <ui_rqt_whycon.h>
 
-#include <image_transport/image_transport.h>
 #include <ros/package.h>
 #include <ros/macros.h>
 #include <sensor_msgs/Image.h>
 #include <geometry_msgs/Point.h>
+#include <image_transport/image_transport.h>
 
 #include <opencv2/core/core.hpp>
 
+#include <QSet>
 #include <QAction>
-#include <QImage>
-#include <QList>
 #include <QString>
-#include <QSize>
 #include <QWidget>
 
 #include <vector>
@@ -60,18 +58,17 @@
 #include "whycon_ros/SetCoords.h"
 #include "whycon_ros/SetDrawing.h"
 
-namespace rqt_whycon_ros
+namespace rqt_whycon
 {
 
-class RqtWhyconRos
-  : public rqt_gui_cpp::Plugin
+class RqtWhycon : public rqt_gui_cpp::Plugin
 {
 
   Q_OBJECT
 
 public:
 
-  RqtWhyconRos();
+  RqtWhycon();
 
   virtual void initPlugin(qt_gui_cpp::PluginContext& context);
 
@@ -119,7 +116,7 @@ protected:
 
   virtual void imageCallback(const sensor_msgs::Image::ConstPtr& msg);
 
-  Ui::RqtWhyconRosWidget ui_;
+  Ui::RqtWhyconWidget ui_;
 
   QWidget* widget_;
 
@@ -156,7 +153,7 @@ private:
     CALIB_STATE_COUNT
   };
 
-  const std::vector<std::string> coord_states_str_
+  const std::vector<QString> coord_states_str_
   {
     "camera coordinates",
     "2D coordinates",
@@ -180,4 +177,4 @@ private:
 
 }
 
-#endif  // RQT_WHYCON_ROS__RQT_WHYCON_ROS_H
+#endif  // RQT_WHYCON__RQT_WHYCON_H

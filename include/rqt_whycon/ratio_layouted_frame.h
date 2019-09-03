@@ -30,8 +30,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef RQT_WHYCON_ROS__RATIOLAYOUTEDFRAME_H
-#define RQT_WHYCON_ROS__RATIOLAYOUTEDFRAME_H
+#ifndef RQT_WHYCON__RATIOLAYOUTEDFRAME_H
+#define RQT_WHYCON__RATIOLAYOUTEDFRAME_H
 
 #include <QFrame>
 #include <QImage>
@@ -42,15 +42,14 @@
 #include <QRect>
 #include <QSize>
 
-namespace rqt_whycon_ros
+namespace rqt_whycon
 {
 
 /**
  * RatioLayoutedFrame is a layout containing a single frame with a fixed aspect ratio.
  * The default aspect ratio is 4:3.
  */
-class RatioLayoutedFrame
-  : public QFrame
+class RatioLayoutedFrame : public QFrame
 {
 
   Q_OBJECT
@@ -113,4 +112,4 @@ private:
 
 }
 
-#endif  // RQT_WHYCON_ROS__RATIOLAYOUTEDFRAME_H
+#endif  // RQT_WHYCON__RATIOLAYOUTEDFRAME_H

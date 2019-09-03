@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <rqt_whycon_ros/rqt_whycon_ros.h>
+#include <rqt_whycon/rqt_whycon.h>
 
 #include <pluginlib/class_list_macros.h>
 #include <ros/master.h>
@@ -39,25 +39,28 @@
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/imgproc/imgproc.hpp>
 
+#include <QImage>
+#include <QList>
+#include <QSize>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QPainter>
 #include <QStandardPaths>
 
-namespace rqt_whycon_ros
+namespace rqt_whycon
 {
 
-RqtWhyconRos::RqtWhyconRos()
+RqtWhycon::RqtWhycon()
   : rqt_gui_cpp::Plugin()
   , widget_(0)
   , rotate_state_(ROTATE_0)
   , coord_state_(COORD_CAMERA)
   , calib_state_(CALIB_AUTO)
 {
-  setObjectName("RqtWhyconRos");
+  setObjectName("RqtWhycon");
 }
 
-void RqtWhyconRos::initPlugin(qt_gui_cpp::PluginContext& context)
+void RqtWhycon::initPlugin(qt_gui_cpp::PluginContext& context)
 {
   // init widget
   widget_ = new QWidget();
@@ -89,7 +92,7 @@ void RqtWhyconRos::initPlugin(qt_gui_cpp::PluginContext& context)
 
   // build coordinate systems and fill combo box
   createCoordinateList();
-  ui_.coordinates_combo_box->setCurrentIndex(ui_.coordinates_combo_box->findText(coord_states_str_[coord_state_].c_str()));
+  ui_.coordinates_combo_box->setCurrentIndex(ui_.coordinates_combo_box->findText(coord_states_str_[coord_state_]));
   connect(ui_.coordinates_combo_box, SIGNAL(currentIndexChanged(int)), this, SLOT(onCoordinateChanged(int)));
 
   // set up calibration stack
@@ -118,7 +121,7 @@ void RqtWhyconRos::initPlugin(qt_gui_cpp::PluginContext& context)
   connect(hide_toolbar_action_, SIGNAL(toggled(bool)), this, SLOT(onHideToolbarChanged(bool)));
 }
 
-void RqtWhyconRos::shutdownPlugin()
+void RqtWhycon::shutdownPlugin()
 {
   // disconnect from the node
   img_sub_.shutdown();
@@ -129,7 +132,7 @@ void RqtWhyconRos::shutdownPlugin()
   select_marker_client_.shutdown();
 }
 
-void RqtWhyconRos::saveSettings(qt_gui_cpp::Settings& plugin_settings, qt_gui_cpp::Settings& instance_settings) const
+void RqtWhycon::saveSettings(qt_gui_cpp::Settings& plugin_settings, qt_gui_cpp::Settings& instance_settings) const
 {
   instance_settings.setValue("topic", ui_.nodes_combo_box->currentText());
   instance_settings.setValue("zoom1", ui_.zoom_1_push_button->isChecked());
@@ -140,7 +143,7 @@ void RqtWhyconRos::saveSettings(qt_gui_cpp::Settings& plugin_settings, qt_gui_cp
   instance_settings.setValue("toolbar_hidden", hide_toolbar_action_->isChecked());
 }
 
-void RqtWhyconRos::restoreSettings(const qt_gui_cpp::Settings& plugin_settings, const qt_gui_cpp::Settings& instance_settings)
+void RqtWhycon::restoreSettings(const qt_gui_cpp::Settings& plugin_settings, const qt_gui_cpp::Settings& instance_settings)
 {
   QString topic = instance_settings.value("topic", "").toString();
   selectNode(topic);
@@ -166,16 +169,16 @@ void RqtWhyconRos::restoreSettings(const qt_gui_cpp::Settings& plugin_settings, 
   hide_toolbar_action_->setChecked(toolbar_hidden);
 }
 
-void RqtWhyconRos::createCoordinateList()
+void RqtWhycon::createCoordinateList()
 {
   // fill combo box
   ui_.coordinates_combo_box->clear();
-  ui_.coordinates_combo_box->addItem(QString(coord_states_str_[COORD_CAMERA].c_str()), QVariant(COORD_CAMERA));
-  ui_.coordinates_combo_box->addItem(QString(coord_states_str_[COORD_2D].c_str()), QVariant(COORD_2D));
-  ui_.coordinates_combo_box->addItem(QString(coord_states_str_[COORD_3D].c_str()), QVariant(COORD_3D));
+  ui_.coordinates_combo_box->addItem(QString(coord_states_str_[COORD_CAMERA]), QVariant(COORD_CAMERA));
+  ui_.coordinates_combo_box->addItem(QString(coord_states_str_[COORD_2D]), QVariant(COORD_2D));
+  ui_.coordinates_combo_box->addItem(QString(coord_states_str_[COORD_3D]), QVariant(COORD_3D));
 }
 
-void RqtWhyconRos::updateNodeList()
+void RqtWhycon::updateNodeList()
 {
   // msg types to look for
   QSet<QString> message_types;
@@ -208,7 +211,7 @@ void RqtWhyconRos::updateNodeList()
   selectNode(selected);
 }
 
-QSet<QString> RqtWhyconRos::getTopics(const QSet<QString>& message_types)
+QSet<QString> RqtWhycon::getTopics(const QSet<QString>& message_types)
 {
   ros::master::V_TopicInfo topics_info;
   ros::master::getTopics(topics_info);
@@ -219,13 +222,13 @@ QSet<QString> RqtWhyconRos::getTopics(const QSet<QString>& message_types)
     if (message_types.contains(topic.datatype.c_str()))
     {
       topics.insert(topic.name.c_str());
-      //qDebug() << "RqtWhyconRos::getTopics() topic " << topic;
+      //qDebug() << "RqtWhycon::getTopics() topic " << topic;
     }
   }
   return topics;
 }
 
-void RqtWhyconRos::selectNode(const QString& node)
+void RqtWhycon::selectNode(const QString& node)
 {
   int index = ui_.nodes_combo_box->findText(node);
   if (index == -1)
@@ -234,12 +237,12 @@ void RqtWhyconRos::selectNode(const QString& node)
     // mainly for restoring last used configuration
     ui_.nodes_combo_box->addItem(node, QVariant(node));
     index = ui_.nodes_combo_box->findText(node);
-    //qDebug() << "RqtWhyconRos::selectNode() adding node " << node;
+    //qDebug() << "RqtWhycon::selectNode() adding node " << node;
   }
   ui_.nodes_combo_box->setCurrentIndex(index);
 }
 
-void RqtWhyconRos::onNodeChanged(int index)
+void RqtWhycon::onNodeChanged(int index)
 {
   // disconnect from previous node
   img_sub_.shutdown();
@@ -260,17 +263,17 @@ void RqtWhyconRos::onNodeChanged(int index)
   {
     std::string node_str = node.toStdString();
     image_transport::ImageTransport it(getNodeHandle());
-    img_sub_ = it.subscribe(node_str + "/processed_image", 1, &RqtWhyconRos::imageCallback, this);
+    img_sub_ = it.subscribe(node_str + "/processed_image", 1, &RqtWhycon::imageCallback, this);
     drawing_client_ = getNodeHandle().serviceClient<whycon_ros::SetDrawing>(node_str + "/set_drawing");
     coord_system_client_ = getNodeHandle().serviceClient<whycon_ros::SetCoords>(node_str + "/set_coords");
     calib_method_client_ = getNodeHandle().serviceClient<whycon_ros::SetCalibMethod>(node_str + "/set_calib_method");
     calib_path_client_ = getNodeHandle().serviceClient<whycon_ros::SetCalibPath>(node_str + "/set_calib_path");
     select_marker_client_ = getNodeHandle().serviceClient<whycon_ros::SelectMarker>(node_str + "/select_marker");
-    //qDebug() << "RqtWhyconRos::onNodeChanged() to node " << node;
+    //qDebug() << "RqtWhycon::onNodeChanged() to node " << node;
   }
 }
 
-void RqtWhyconRos::onCoordinateChanged(int index)
+void RqtWhycon::onCoordinateChanged(int index)
 {
   if(coord_system_client_.exists())
   {
@@ -329,6 +332,7 @@ void RqtWhyconRos::onCoordinateChanged(int index)
 
       // fallback to camera coordinates
       coord_state_ = COORD_CAMERA;
+      ui_.coordinates_combo_box->setCurrentIndex(ui_.coordinates_combo_box->findText(coord_states_str_[coord_state_]));
       if(ui_.auto_calib_push_button->isEnabled())
       {
         ui_.auto_calib_push_button->setEnabled(false);
@@ -345,11 +349,11 @@ void RqtWhyconRos::onCoordinateChanged(int index)
   }
   else
   {
-    //qDebug() << "RqtWhyconRos::onCoordinateChanged() client" << coord_system_client_.getService() << ".exists() returned false";
+    //qDebug() << "RqtWhycon::onCoordinateChanged() client" << coord_system_client_.getService() << ".exists() returned false";
   }
 }
 
-void RqtWhyconRos::onDrawChanged()
+void RqtWhycon::onDrawChanged()
 {
   if(drawing_client_.exists())
   {
@@ -360,11 +364,11 @@ void RqtWhyconRos::onDrawChanged()
   }
   else
   {
-    //qDebug() << "RqtWhyconRos::onDrawChanged() client" << drawing_client_.getService() << ".exists() returned false";
+    //qDebug() << "RqtWhycon::onDrawChanged() client" << drawing_client_.getService() << ".exists() returned false";
   }
 }
 
-void RqtWhyconRos::onCalibMethod()
+void RqtWhycon::onCalibMethod()
 {
   if(calib_method_client_.exists())
   {
@@ -379,11 +383,11 @@ void RqtWhyconRos::onCalibMethod()
   }
   else
   {
-    //qDebug() << "RqtWhyconRos::onCalibMethod() client" << calib_method_client_.getService() << ".exists() returned false";
+    //qDebug() << "RqtWhycon::onCalibMethod() client" << calib_method_client_.getService() << ".exists() returned false";
   }
 }
 
-void RqtWhyconRos::onZoom1(bool checked)
+void RqtWhycon::onZoom1(bool checked)
 {
   if (checked)
   {
@@ -400,7 +404,7 @@ void RqtWhyconRos::onZoom1(bool checked)
   }
 }
 
-void RqtWhyconRos::loadCalib()
+void RqtWhycon::loadCalib()
 {
   QString file_name = QFileDialog::getOpenFileName(widget_, tr("Open calibration file"), QStandardPaths::writableLocation(QStandardPaths::HomeLocation), tr("YAML file (*.yaml)"));
   if(file_name.isEmpty())
@@ -422,11 +426,11 @@ void RqtWhyconRos::loadCalib()
   }
   else
   {
-    //qDebug() << "RqtWhyconRos::loadCalib() client" << calib_path_client_.getService() << ".exists() returned false";
+    //qDebug() << "RqtWhycon::loadCalib() client" << calib_path_client_.getService() << ".exists() returned false";
   }
 }
 
-void RqtWhyconRos::saveCalib()
+void RqtWhycon::saveCalib()
 {
   QString file_name = QFileDialog::getSaveFileName(widget_, tr("Save calibration file"), QStandardPaths::writableLocation(QStandardPaths::HomeLocation), tr("YAML file (*.yaml)"));
   if(file_name.isEmpty())
@@ -448,11 +452,11 @@ void RqtWhyconRos::saveCalib()
   }
   else
   {
-    //qDebug() << "RqtWhyconRos::saveCalib() client" << calib_path_client_.getService() << ".exists() returned false";
+    //qDebug() << "RqtWhycon::saveCalib() client" << calib_path_client_.getService() << ".exists() returned false";
   }
 }
 
-void RqtWhyconRos::saveImage()
+void RqtWhycon::saveImage()
 {
   // take a snapshot before asking for the filename
   QImage img = ui_.image_frame->getImageCopy();
@@ -466,7 +470,7 @@ void RqtWhyconRos::saveImage()
   img.save(file_name);
 }
 
-void RqtWhyconRos::onMouseLeft(int x, int y)
+void RqtWhycon::onMouseLeft(int x, int y)
 {
   if(select_marker_client_.exists())
   {
@@ -507,16 +511,16 @@ void RqtWhyconRos::onMouseLeft(int x, int y)
   }
   else
   {
-    //qDebug() << "RqtWhyconRos::onMouseLeft() client" << select_marker_client_.getService() << ".exists() returned false";
+    //qDebug() << "RqtWhycon::onMouseLeft() client" << select_marker_client_.getService() << ".exists() returned false";
   }
 }
 
-void RqtWhyconRos::onHideToolbarChanged(bool hide)
+void RqtWhycon::onHideToolbarChanged(bool hide)
 {
   ui_.toolbar_widget->setVisible(!hide);
 }
 
-void RqtWhyconRos::onRotateLeft()
+void RqtWhycon::onRotateLeft()
 {
   int m = rotate_state_ - 1;
   if(m < 0)
@@ -526,13 +530,13 @@ void RqtWhyconRos::onRotateLeft()
   syncRotateLabel();
 }
 
-void RqtWhyconRos::onRotateRight()
+void RqtWhycon::onRotateRight()
 {
   rotate_state_ = static_cast<RotateState>((rotate_state_ + 1) % ROTATE_STATE_COUNT);
   syncRotateLabel();
 }
 
-void RqtWhyconRos::syncRotateLabel()
+void RqtWhycon::syncRotateLabel()
 {
   switch(rotate_state_)
   {
@@ -544,7 +548,7 @@ void RqtWhyconRos::syncRotateLabel()
   }
 }
 
-void RqtWhyconRos::imageCallback(const sensor_msgs::Image::ConstPtr& msg)
+void RqtWhycon::imageCallback(const sensor_msgs::Image::ConstPtr& msg)
 {
   try
   {
@@ -566,14 +570,14 @@ void RqtWhyconRos::imageCallback(const sensor_msgs::Image::ConstPtr& msg)
         // convert gray to rgb
         cv::cvtColor(cv_ptr->image, conversion_mat_, CV_GRAY2RGB);
       } else {
-        qWarning("RqtWhyconRos.imageCallback() could not convert image from '%s' to 'rgb8' (%s)", msg->encoding.c_str(), e.what());
+        qWarning("RqtWhycon.imageCallback() could not convert image from '%s' to 'rgb8' (%s)", msg->encoding.c_str(), e.what());
         ui_.image_frame->setImage(QImage());
         return;
       }
     }
     catch (cv_bridge::Exception& e)
     {
-      qWarning("RqtWhyconRos.imageCallback() while trying to convert image from '%s' to 'rgb8' an exception was thrown (%s)", msg->encoding.c_str(), e.what());
+      qWarning("RqtWhycon.imageCallback() while trying to convert image from '%s' to 'rgb8' an exception was thrown (%s)", msg->encoding.c_str(), e.what());
       ui_.image_frame->setImage(QImage());
       return;
     }
@@ -622,4 +626,4 @@ void RqtWhyconRos::imageCallback(const sensor_msgs::Image::ConstPtr& msg)
 
 }
 
-PLUGINLIB_EXPORT_CLASS(rqt_whycon_ros::RqtWhyconRos, rqt_gui_cpp::Plugin)
+PLUGINLIB_EXPORT_CLASS(rqt_whycon::RqtWhycon, rqt_gui_cpp::Plugin)

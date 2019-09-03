@@ -1,7 +1,7 @@
-<library path="librqt_whycon_ros">
-  <class name="rqt_whycon_ros/RqtWhyconRos" type="rqt_whycon_ros::RqtWhyconRos" base_class_type="rqt_gui_cpp::Plugin">
+<library path="lib/librqt_whycon">
+  <class name="rqt_whycon/RqtWhycon" type="rqt_whycon::RqtWhycon" base_class_type="rqt_gui_cpp::Plugin">
     <description>
-      A GUI plugin to view a sensor_msgs/Image topic.
+      A GUI plugin to control and view output of WhyCon package.
     </description>
     <qtgui>
       <group>
@@ -9,9 +9,9 @@
         <icon type="theme">folder</icon>
         <statustip>Plugins related to fiducial markers.</statustip>
       </group>
-      <label>Whycon ROS</label>
+      <label>WhyCon</label>
       <icon type="theme">image-x-generic</icon>
-      <statustip>A GUI plugin for whycon_ros package.</statustip>
+      <statustip>A GUI plugin to control and view output of WhyCon package.</statustip>
     </qtgui>
   </class>
 </library>
