@@ -105,11 +105,12 @@ private:
   QSize aspect_ratio_;
 
   QImage qimage_;
+
   mutable QMutex qimage_mutex_;
 
   bool smoothImage_;
 };
 
-}
+}  // namespace rqt_whycon
 
 #endif  // RQT_WHYCON__RATIOLAYOUTEDFRAME_H

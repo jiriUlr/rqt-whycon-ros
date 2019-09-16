@@ -169,6 +169,6 @@ private:
   CalibState calib_state_;
 };
 
-}
+}  // namespace rqt_whycon
 
 #endif  // RQT_WHYCON__RQT_WHYCON_H
