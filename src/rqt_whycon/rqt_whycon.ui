@@ -249,7 +249,7 @@
         <item>
          <widget class="QPushButton" name="auto_calib_push_button">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <property name="toolTip">
            <string>Autocalibrating coords using 4 outermost markers</string>
@@ -274,7 +274,7 @@
         <item>
          <widget class="QPushButton" name="man_calib_push_button">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <property name="toolTip">
            <string>Manually calibrating coords (click desired on markers)</string>
@@ -296,7 +296,7 @@
         <item>
          <widget class="QPushButton" name="recalib_push_button">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <property name="toolTip">
            <string>Recalibrate using currently selected calibration method</string>
