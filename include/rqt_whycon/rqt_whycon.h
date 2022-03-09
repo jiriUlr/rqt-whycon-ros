@@ -95,7 +95,9 @@ protected slots:
 
   virtual void onDrawChanged();
 
-  virtual void onCalibMethod();
+  virtual void onCalibMethodAuto();
+
+  virtual void onCalibMethodManual();
 
   virtual void onMouseLeft(int x, int y);
 
@@ -156,6 +158,8 @@ private:
   };
 
   void syncRotateLabel();
+
+  void changeCalibMethod(const CalibState& state);
     
   ros::ServiceClient drawing_client_;
   ros::ServiceClient coord_system_client_;

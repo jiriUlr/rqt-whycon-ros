@@ -62,7 +62,7 @@ RqtWhycon::RqtWhycon()
   , widget_(0)
   , rotate_state_(ROTATE_0)
   , coord_state_(COORD_CAMERA)
-  , calib_state_(CALIB_AUTO)
+  // , calib_state_(CALIB_AUTO)
 {
   setObjectName("RqtWhycon");
 }
@@ -111,11 +111,9 @@ void RqtWhycon::initPlugin(qt_gui_cpp::PluginContext& context)
   connect(ui_.draw_segments_push_button, SIGNAL(toggled(bool)), this, SLOT(onDrawChanged()));
   connect(ui_.draw_coords_push_button, SIGNAL(toggled(bool)), this, SLOT(onDrawChanged()));
 
-  // set up calibration button group
-  ui_.calib_button_group->setId(ui_.auto_calib_push_button, CALIB_AUTO);
-  ui_.calib_button_group->setId(ui_.man_calib_push_button, CALIB_MAN);
-  connect(ui_.calib_button_group, SIGNAL(buttonClicked(int)), this, SLOT(onCalibMethod()));
-  connect(ui_.recalib_push_button, SIGNAL(clicked(bool)), this, SLOT(onCalibMethod()));
+  // set up calibration buttons
+  connect(ui_.auto_calib_push_button, SIGNAL(clicked(bool)), this, SLOT(onCalibMethodAuto()));
+  connect(ui_.man_calib_push_button, SIGNAL(clicked(bool)), this, SLOT(onCalibMethodManual()));
 
   // set up displaying image widget
   ui_.image_frame->setOuterLayout(ui_.image_layout);
@@ -141,6 +139,7 @@ void RqtWhycon::shutdownPlugin()
 
 void RqtWhycon::saveSettings(qt_gui_cpp::Settings& plugin_settings, qt_gui_cpp::Settings& instance_settings) const
 {
+  return;
   instance_settings.setValue("topic", ui_.nodes_combo_box->currentText());
   instance_settings.setValue("zoom1", ui_.zoom_1_push_button->isChecked());
   instance_settings.setValue("smooth_image", ui_.smooth_image_push_button->isChecked());
@@ -152,6 +151,7 @@ void RqtWhycon::saveSettings(qt_gui_cpp::Settings& plugin_settings, qt_gui_cpp::
 
 void RqtWhycon::restoreSettings(const qt_gui_cpp::Settings& plugin_settings, const qt_gui_cpp::Settings& instance_settings)
 {
+  return;
   QString topic = instance_settings.value("topic", "").toString();
   selectNode(topic);
 
@@ -216,6 +216,7 @@ void RqtWhycon::updateNodeList()
 
   // restore previous selection
   selectNode(selected);
+  ui_.refresh_nodes_push_button->clearFocus();
 }
 
 QSet<QString> RqtWhycon::getTopics(const QSet<QString>& message_types)
@@ -278,6 +279,7 @@ void RqtWhycon::onNodeChanged(int index)
     select_marker_client_ = getNodeHandle().serviceClient<whycon::SelectMarker>(node_str + "/select_marker");
     //qDebug() << "RqtWhycon::onNodeChanged() to node " << node;
   }
+  ui_.nodes_combo_box->clearFocus();
 }
 
 void RqtWhycon::onCoordinateChanged(int index)
@@ -291,73 +293,20 @@ void RqtWhycon::onCoordinateChanged(int index)
     coord_system_client_.call(set_coords);
 
     // decide if coordinate change was successful before enabling bottons
-    if(set_coords.response.success)
-    {
-      switch(coord_state_)
-      {
-        default:
-        case COORD_CAMERA:
-          {
-            // disable calibration options because it's not needed
-            if(ui_.auto_calib_push_button->isEnabled())
-            {
-              ui_.auto_calib_push_button->setEnabled(false);
-            }
-            if(ui_.man_calib_push_button->isEnabled())
-            {
-              ui_.man_calib_push_button->setEnabled(false);
-            }
-            if(ui_.recalib_push_button->isEnabled())
-            {
-              ui_.recalib_push_button->setEnabled(false);
-            }
-            break;
-          }
-        case COORD_2D:
-        case COORD_3D:
-          {
-            // enable calibration options
-            if(!ui_.auto_calib_push_button->isEnabled())
-            {
-              ui_.auto_calib_push_button->setEnabled(true);
-            }
-            if(!ui_.man_calib_push_button->isEnabled())
-            {
-              ui_.man_calib_push_button->setEnabled(true);
-            }
-            if(!ui_.recalib_push_button->isEnabled())
-            {
-              ui_.recalib_push_button->setEnabled(true);
-            }
-            break;
-          }
-      }
-    }
-    else
+    if(!set_coords.response.success)
     {
       QMessageBox::warning(widget_, tr("Coordinate system fail"), set_coords.response.msg.c_str());
 
       // fallback to camera coordinates
       coord_state_ = COORD_CAMERA;
       ui_.coordinates_combo_box->setCurrentIndex(ui_.coordinates_combo_box->findText(coord_states_str_[coord_state_]));
-      if(ui_.auto_calib_push_button->isEnabled())
-      {
-        ui_.auto_calib_push_button->setEnabled(false);
-      }
-      if(ui_.man_calib_push_button->isEnabled())
-      {
-        ui_.man_calib_push_button->setEnabled(false);
-      }
-      if(ui_.recalib_push_button->isEnabled())
-      {
-        ui_.recalib_push_button->setEnabled(false);
-      }
     }
   }
   else
   {
     //qDebug() << "RqtWhycon::onCoordinateChanged() client" << coord_system_client_.getService() << ".exists() returned false";
   }
+  ui_.coordinates_combo_box->clearFocus();
 }
 
 void RqtWhycon::onDrawChanged()
@@ -373,14 +322,28 @@ void RqtWhycon::onDrawChanged()
   {
     //qDebug() << "RqtWhycon::onDrawChanged() client" << drawing_client_.getService() << ".exists() returned false";
   }
+  ui_.draw_coords_push_button->clearFocus();
+  ui_.draw_segments_push_button->clearFocus();
 }
 
-void RqtWhycon::onCalibMethod()
+void RqtWhycon::onCalibMethodAuto()
+{
+  changeCalibMethod(CALIB_AUTO);
+  ui_.auto_calib_push_button->clearFocus();
+}
+
+void RqtWhycon::onCalibMethodManual()
+{
+  changeCalibMethod(CALIB_MAN);
+  ui_.man_calib_push_button->clearFocus();
+}
+
+void RqtWhycon::changeCalibMethod(const CalibState& state)
 {
   if(calib_method_client_.exists())
   {
     whycon::SetCalibMethod calib_method;
-    calib_method.request.method = ui_.calib_button_group->checkedId();
+    calib_method.request.method = state;
     calib_method_client_.call(calib_method);
 
     if(!calib_method.response.success)
@@ -390,7 +353,7 @@ void RqtWhycon::onCalibMethod()
   }
   else
   {
-    //qDebug() << "RqtWhycon::onCalibMethod() client" << calib_method_client_.getService() << ".exists() returned false";
+    //qDebug() << "RqtWhycon::changeCalibMethod() client" << calib_method_client_.getService() << ".exists() returned false";
   }
 }
 
@@ -409,10 +372,12 @@ void RqtWhycon::onZoom1(bool checked)
     widget_->setMinimumSize(QSize(80, 60));
     widget_->setMaximumSize(QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX));
   }
+  ui_.zoom_1_push_button->clearFocus();
 }
 
 void RqtWhycon::loadCalib()
 {
+  ui_.load_calib_push_button->clearFocus();
   QString file_name = QFileDialog::getOpenFileName(widget_, tr("Open calibration file"), QStandardPaths::writableLocation(QStandardPaths::HomeLocation), tr("YAML file (*.yaml)"));
   if(file_name.isEmpty())
   {
@@ -439,6 +404,7 @@ void RqtWhycon::loadCalib()
 
 void RqtWhycon::saveCalib()
 {
+  ui_.save_calib_push_button->clearFocus();
   QString file_name = QFileDialog::getSaveFileName(widget_, tr("Save calibration file"), QStandardPaths::writableLocation(QStandardPaths::HomeLocation), tr("YAML file (*.yaml)"));
   if(file_name.isEmpty())
   {
@@ -465,6 +431,7 @@ void RqtWhycon::saveCalib()
 
 void RqtWhycon::saveImage()
 {
+  ui_.save_as_image_push_button->clearFocus();
   // take a snapshot before asking for the filename
   QImage img = ui_.image_frame->getImageCopy();
 
@@ -535,12 +502,14 @@ void RqtWhycon::onRotateLeft()
 
   rotate_state_ = static_cast<RotateState>(m);
   syncRotateLabel();
+  ui_.rotate_left_push_button->clearFocus();
 }
 
 void RqtWhycon::onRotateRight()
 {
   rotate_state_ = static_cast<RotateState>((rotate_state_ + 1) % ROTATE_STATE_COUNT);
   syncRotateLabel();
+  ui_.rotate_right_push_button->clearFocus();
 }
 
 void RqtWhycon::syncRotateLabel()
