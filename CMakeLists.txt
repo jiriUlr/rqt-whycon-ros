@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 
 project(rqt_whycon)
 
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++11 -O3)
 
 # Load catkin and all dependencies required for this package
 find_package(catkin REQUIRED COMPONENTS

@@ -103,6 +103,10 @@ protected slots:
 
   virtual void onHideToolbarChanged(bool hide);
 
+  virtual void onActivatedNodesComboBox();
+
+  virtual void onActivatedCoordinateComboBox();
+
 protected:
 
   virtual void createCoordinateList();
@@ -166,6 +170,7 @@ private:
   ros::ServiceClient calib_method_client_;
   ros::ServiceClient calib_path_client_;
   ros::ServiceClient select_marker_client_;
+  ros::ServiceClient gui_settings_client_;
 
   QAction* hide_toolbar_action_;
 

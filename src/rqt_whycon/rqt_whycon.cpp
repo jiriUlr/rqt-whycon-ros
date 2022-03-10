@@ -53,6 +53,7 @@
 #include "whycon/SetCalibPath.h"
 #include "whycon/SetCoords.h"
 #include "whycon/SetDrawing.h"
+#include "whycon/GetGuiSettings.h"
 
 namespace rqt_whycon
 {
@@ -84,6 +85,7 @@ void RqtWhycon::initPlugin(qt_gui_cpp::PluginContext& context)
   updateNodeList();
   ui_.nodes_combo_box->setCurrentIndex(ui_.nodes_combo_box->findText(""));
   connect(ui_.nodes_combo_box, SIGNAL(currentIndexChanged(int)), this, SLOT(onNodeChanged(int)));
+  connect(ui_.nodes_combo_box, SIGNAL(activated(int)), this, SLOT(onActivatedNodesComboBox()));
   connect(ui_.refresh_nodes_push_button, SIGNAL(pressed()), this, SLOT(updateNodeList()));
 
   // buttons to control quility and dimensions of image
@@ -101,6 +103,7 @@ void RqtWhycon::initPlugin(qt_gui_cpp::PluginContext& context)
   createCoordinateList();
   ui_.coordinates_combo_box->setCurrentIndex(ui_.coordinates_combo_box->findText(coord_states_str_[coord_state_]));
   connect(ui_.coordinates_combo_box, SIGNAL(currentIndexChanged(int)), this, SLOT(onCoordinateChanged(int)));
+  connect(ui_.coordinates_combo_box, SIGNAL(activated(int)), this, SLOT(onActivatedCoordinateComboBox()));
 
   // set up calibration stack
   connect(ui_.load_calib_push_button, SIGNAL(pressed()), this, SLOT(loadCalib()));
@@ -135,23 +138,20 @@ void RqtWhycon::shutdownPlugin()
   calib_method_client_.shutdown();
   calib_path_client_.shutdown();
   select_marker_client_.shutdown();
+  gui_settings_client_.shutdown();
 }
 
 void RqtWhycon::saveSettings(qt_gui_cpp::Settings& plugin_settings, qt_gui_cpp::Settings& instance_settings) const
 {
-  return;
   instance_settings.setValue("topic", ui_.nodes_combo_box->currentText());
   instance_settings.setValue("zoom1", ui_.zoom_1_push_button->isChecked());
   instance_settings.setValue("smooth_image", ui_.smooth_image_push_button->isChecked());
   instance_settings.setValue("rotate", rotate_state_);
-  instance_settings.setValue("draw_segments", ui_.draw_segments_push_button->isChecked());
-  instance_settings.setValue("draw_coords", ui_.draw_coords_push_button->isChecked());
   instance_settings.setValue("toolbar_hidden", hide_toolbar_action_->isChecked());
 }
 
 void RqtWhycon::restoreSettings(const qt_gui_cpp::Settings& plugin_settings, const qt_gui_cpp::Settings& instance_settings)
 {
-  return;
   QString topic = instance_settings.value("topic", "").toString();
   selectNode(topic);
 
@@ -166,14 +166,18 @@ void RqtWhycon::restoreSettings(const qt_gui_cpp::Settings& plugin_settings, con
     rotate_state_ = ROTATE_0;
   syncRotateLabel();
 
-  bool draw_segments_checked = instance_settings.value("draw_segments", false).toBool();
-  ui_.draw_segments_push_button->setChecked(draw_segments_checked);
-
-  bool draw_coords_checked = instance_settings.value("draw_coords", true).toBool();
-  ui_.draw_coords_push_button->setChecked(draw_coords_checked);
-
   bool toolbar_hidden = instance_settings.value("toolbar_hidden", false).toBool();
   hide_toolbar_action_->setChecked(toolbar_hidden);
+}
+
+void RqtWhycon::onActivatedNodesComboBox()
+{
+  ui_.nodes_combo_box->clearFocus();
+}
+
+void RqtWhycon::onActivatedCoordinateComboBox()
+{
+  ui_.coordinates_combo_box->clearFocus();
 }
 
 void RqtWhycon::createCoordinateList()
@@ -259,6 +263,7 @@ void RqtWhycon::onNodeChanged(int index)
   calib_method_client_.shutdown();
   calib_path_client_.shutdown();
   select_marker_client_.shutdown();
+  gui_settings_client_.shutdown();
 
   // reset image on topic change
   ui_.image_frame->setImage(QImage());
@@ -277,9 +282,27 @@ void RqtWhycon::onNodeChanged(int index)
     calib_method_client_ = getNodeHandle().serviceClient<whycon::SetCalibMethod>(node_str + "/set_calib_method");
     calib_path_client_ = getNodeHandle().serviceClient<whycon::SetCalibPath>(node_str + "/set_calib_path");
     select_marker_client_ = getNodeHandle().serviceClient<whycon::SelectMarker>(node_str + "/select_marker");
+    gui_settings_client_ = getNodeHandle().serviceClient<whycon::GetGuiSettings>(node_str + "/get_gui_settings");
     //qDebug() << "RqtWhycon::onNodeChanged() to node " << node;
   }
-  ui_.nodes_combo_box->clearFocus();
+
+  whycon::GetGuiSettings gui_settings;
+  if(gui_settings_client_.exists() && gui_settings_client_.call(gui_settings))
+  {
+    ui_.draw_coords_push_button->blockSignals(true);
+    ui_.draw_segments_push_button->blockSignals(true);
+    ui_.coordinates_combo_box->blockSignals(true);
+
+    ui_.draw_coords_push_button->setChecked(gui_settings.response.draw_coords);
+    ui_.draw_segments_push_button->setChecked(gui_settings.response.draw_segments);
+
+    coord_state_ = static_cast<CoordState>(gui_settings.response.coords);
+    ui_.coordinates_combo_box->setCurrentIndex(ui_.coordinates_combo_box->findText(coord_states_str_[coord_state_]));
+
+    ui_.draw_coords_push_button->blockSignals(false);
+    ui_.draw_segments_push_button->blockSignals(false);
+    ui_.coordinates_combo_box->blockSignals(false);
+  }
 }
 
 void RqtWhycon::onCoordinateChanged(int index)
@@ -306,7 +329,6 @@ void RqtWhycon::onCoordinateChanged(int index)
   {
     //qDebug() << "RqtWhycon::onCoordinateChanged() client" << coord_system_client_.getService() << ".exists() returned false";
   }
-  ui_.coordinates_combo_box->clearFocus();
 }
 
 void RqtWhycon::onDrawChanged()
@@ -372,7 +394,6 @@ void RqtWhycon::onZoom1(bool checked)
     widget_->setMinimumSize(QSize(80, 60));
     widget_->setMaximumSize(QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX));
   }
-  ui_.zoom_1_push_button->clearFocus();
 }
 
 void RqtWhycon::loadCalib()
